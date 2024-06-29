@@ -8,7 +8,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let results = if config.case_sensitive {
         search(config.query, &contents)
     } else {
-        search_case_insensitive(config.query, &contents)
+        search_insensitive(config.query, &contents)
     };
 
     for line in results {
@@ -54,7 +54,7 @@ pub fn search<'a>(query: &'a str, contents: &'a str) -> Vec<&'a str> {
     results
 }
 
-pub fn search_case_insensitive<'a>(query: &'a str, contents: &'a str) -> Vec<&'a str> {
+pub fn search_insensitive<'a>(query: &'a str, contents: &'a str) -> Vec<&'a str> {
     let query = query.to_lowercase();
     let mut results = Vec::new();
 
@@ -91,6 +91,6 @@ Rust:
 safe, fast, productive.
 Pick three.";
 
-        assert_eq!(vec!["Rust:"], search_case_insensitive(query, contents));
+        assert_eq!(vec!["Rust:"], search_insensitive(query, contents));
     }
 }

@@ -37,16 +37,6 @@ impl<'a> Config<'a> {
             file_name: &args[2],
             case_sensitive: parsed_bool,
         })
-
-        // if let Ok(parsed_bool) = bool::from_str(&args[3]) {
-        //     Ok(Self {
-        //         query: &args[1],
-        //         file_name: &args[2],
-        //         case_sensitive: parsed_bool,
-        //     })
-        // } else {
-        //     Err("Failed to parse bool")
-        // }
     }
 }
 

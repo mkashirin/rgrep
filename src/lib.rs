@@ -1,3 +1,4 @@
+use std::env;
 use std::error::Error;
 use std::fs;
 use std::str::FromStr;
@@ -6,9 +7,9 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let contents = fs::read_to_string(config.file_name)?;
 
     let results = if config.case_sensitive {
-        search(config.query, &contents)
+        search(config.query.as_str(), &contents)
     } else {
-        search_insensitive(config.query, &contents)
+        search_insensitive(config.query.as_str(), &contents)
     };
 
     for line in results {
@@ -18,51 +19,53 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub struct Config<'a> {
-    pub query: &'a str,
-    pub file_name: &'a str,
+pub struct Config {
+    pub query: String,
+    pub file_name: String,
     pub case_sensitive: bool,
 }
 
-impl<'a> Config<'a> {
-    pub fn new(args: &'a [String]) -> Result<Self, &str> {
+impl Config {
+    pub fn new(mut args: env::Args) -> Result<Self, &'static str> {
         if args.len() < 4 {
             return Err("Not enough arguments");
         }
+        args.next();
 
-        let parsed_bool = bool::from_str(&args[3]).map_err(|_| "Failed to parse bool")?;
+        let query = next_arg(&mut args, "Could not get query")?;
+        let file_name = next_arg(&mut args, "Could not get file name")?;
+        let case_sensitive = next_arg(&mut args, "Could not find case flag")?;
+        let case_sensitive =
+            bool::from_str(case_sensitive.as_str()).map_err(|_| "Failed to parse bool")?;
 
         Ok(Self {
-            query: &args[1],
-            file_name: &args[2],
-            case_sensitive: parsed_bool,
+            query,
+            file_name,
+            case_sensitive,
         })
     }
 }
 
-pub fn search<'a>(query: &'a str, contents: &'a str) -> Vec<&'a str> {
-    let mut results = Vec::new();
-
-    for line in contents.lines() {
-        if line.contains(query) {
-            results.push(line);
-        }
-    }
-
-    results
+pub fn search<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
+    contents
+        .lines()
+        .filter(|line| line.contains(query))
+        .collect()
 }
 
-pub fn search_insensitive<'a>(query: &'a str, contents: &'a str) -> Vec<&'a str> {
+pub fn search_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
     let query = query.to_lowercase();
-    let mut results = Vec::new();
+    contents
+        .lines()
+        .filter(|line| line.to_lowercase().contains(&query))
+        .collect()
+}
 
-    for line in contents.lines() {
-        if line.to_lowercase().contains(&query) {
-            results.push(line);
-        }
+fn next_arg(args: &mut env::Args, err_msg: &'static str) -> Result<String, &'static str> {
+    match args.next() {
+        Some(arg) => Ok(arg),
+        None => Err(err_msg),
     }
-
-    results
 }
 
 #[cfg(test)]
